@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Daily Sales Report</title>
+  <style>
+    body {
+      font-family: Arial;
+      background-color: #f4f6f9;
+      text-align: center;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: auto;
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0px 0px 10px rgba(0,0,0,0.1);
+    }
+
+    h2 {
+      margin-bottom: 20px;
+    }
+
+    .stats {
+      display: flex;
+      justify-content: space-around;
+      margin-bottom: 20px;
+    }
+
+    .card {
+      background: #4CAF50;
+      color: white;
+      padding: 20px;
+      border-radius: 10px;
+      width: 30%;
+      font-size: 18px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th, td {
+      padding: 12px;
+      border-bottom: 1px solid #ddd;
+    }
+
+    th {
+      background-color: #4CAF50;
+      color: white;
+    }
+
+    .nav a {
+      margin: 10px;
+    }
+
+    button {
+      padding: 10px 20px;
+      margin-top: 15px;
+      font-size: 16px;
+      border-radius: 8px;
+      border: none;
+      background-color: #f44336;
+      color: white;
+    }
+
+    button:hover {
+      background-color: #d32f2f;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+
+  <h2>📊 Daily Sales Dashboard</h2>
+
+  <div class="nav">
+    <a href="index.html">Sales</a> |
+    <a href="supplier.html">Supplier</a> |
+    <a href="inventory.html">Inventory</a>
+  </div>
+
+  <!-- Summary Cards -->
+  <div class="stats">
+    <div class="card" id="revenueCard">Revenue: $0</div>
+    <div class="card" id="itemsCard">Items Sold: 0</div>
+    <div class="card" id="profitCard">Profit: $0</div>
+  </div>
+
+  <!-- Table -->
+  <h3>Sales Details</h3>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Item</th>
+        <th>Price ($)</th>
+        <th>Qty</th>
+        <th>Total ($)</th>
+        <th>Time</th>
+      </tr>
+    </thead>
+    <tbody id="salesTable"></tbody>
+  </table>
+
+  <button onclick="clearData()">Reset Day</button>
+
+</div>
+
+<script>
+// Same item list
+const items = {
+  1: { name: "Apple", price: 5, cost: 3 },
+  2: { name: "Grapes", price: 10, cost: 6 },
+  3: { name: "Orange", price: 7, cost: 4 }
+};
+
+// Load saved sales
+let sales = JSON.parse(localStorage.getItem("sales")) || [];
+
+let totalRevenue = 0;
+let totalItems = 0;
+let totalProfit = 0;
+
+const table = document.getElementById("salesTable");
+
+sales.forEach(sale => {
+  const row = table.insertRow();
+
+  row.insertCell(0).innerText = sale.name;
+  row.insertCell(1).innerText = sale.price;
+  row.insertCell(2).innerText = sale.qty;
+  row.insertCell(3).innerText = sale.total;
+  row.insertCell(4).innerText = sale.time;
+
+  totalRevenue += sale.total;
+  totalItems += sale.qty;
+
+  // Profit = selling - cost
+  const cost = items[sale.code].cost * sale.qty;
+  totalProfit += (sale.total - cost);
+});
+
+// Update UI
+document.getElementById("revenueCard").innerText = "Revenue: $" + totalRevenue;
+document.getElementById("itemsCard").innerText = "Items Sold: " + totalItems;
+document.getElementById("profitCard").innerText = "Profit: $" + totalProfit;
+
+// Reset system
+function clearData() {
+  if (confirm("Reset all data for today?")) {
+    localStorage.clear();
+    location.reload();
+  }
+}
+</script>
+
+</body>
+</html>

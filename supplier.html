@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Add Stock</title>
+  <style>
+    body { font-family: Arial; text-align: center; background-color: #f5f5f5; }
+    .container { max-width: 500px; margin: auto; background: white; padding: 20px; border-radius: 12px; margin-top: 20px; }
+    input { width: 85%; padding: 15px; font-size: 18px; margin: 10px; border-radius: 8px; border: 1px solid #ccc; text-align: center; }
+    button { width: 90%; padding: 15px; font-size: 18px; background-color: #2196F3; color: white; border: none; border-radius: 10px; cursor: pointer; }
+    .nav a { margin: 10px; text-decoration: none; color: #2196F3; font-weight: bold; }
+  </style>
+</head>
+<body>
+<div class="container">
+  <h2>📦 Supplier (Restock Meds)</h2>
+  <div class="nav"><a href="index.html">Sales</a> | <a href="inventory.html">Inventory</a> | <a href="report.html">Report</a></div>
+  <input id="code" placeholder="Enter Med Code (M001-M006)" oninput="checkItem()">
+  <div id="itemName" style="font-weight: bold; margin: 10px; color: #2196F3;"></div>
+  <input id="qty" type="number" placeholder="Quantity to Add">
+  <button onclick="addStock()">➕ Update Inventory</button>
+</div>
+
+<script>
+const items = {
+  "M001": { name: "Acmecilin" }, "M002": { name: "Paracetamol" }, "M003": { name: "Amoxicillin" },
+  "M004": { name: "Cetirizine" }, "M005": { name: "Ibuprofen" }, "M006": { name: "Gaviscon" }
+};
+
+let inventory = JSON.parse(localStorage.getItem("inventory")) || { 
+  "M001": 100, "M002": 100, "M003": 100, "M004": 100, "M005": 100, "M006": 100 
+};
+
+function checkItem() {
+  const code = document.getElementById("code").value.toUpperCase();
+  const display = document.getElementById("itemName");
+  display.innerText = items[code] ? "Item: " + items[code].name : "";
+}
+
+function addStock() {
+  const code = document.getElementById("code").value.toUpperCase();
+  const qty = parseInt(document.getElementById("qty").value);
+  if (!items[code] || !qty) return alert("Invalid entry");
+
+  inventory[code] = (inventory[code] || 0) + qty;
+  localStorage.setItem("inventory", JSON.stringify(inventory));
+  alert("Stock Added!");
+  location.reload();
+}
+</script>
+</body>
+</html>

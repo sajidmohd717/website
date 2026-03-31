@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Bismillah Pharmacy POS</title>
+  <style>
+    body { font-family: 'Segoe UI', sans-serif; background-color: #f0f2f5; margin: 0; padding: 10px; overflow-x: hidden; }
+    .header { background: #004d40; color: white; padding: 10px; display: flex; justify-content: space-between; align-items: center; border-radius: 8px; margin-bottom: 10px; }
+    .nav a { margin-left: 15px; color: #b2dfdb; text-decoration: none; font-size: 14px; font-weight: bold; }
+    .main-grid { display: flex; gap: 15px; align-items: flex-start; max-width: 1200px; margin: auto; }
+    .panel-left { flex: 1; background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+    .panel-right { flex: 1.5; background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); max-height: 85vh; overflow-y: auto; }
+    
+    h3 { margin: 0 0 10px 0; font-size: 16px; color: #004d40; border-bottom: 1px solid #eee; padding-bottom: 5px; display: flex; justify-content: space-between; }
+    
+    input, select { padding: 10px; font-size: 15px; margin-bottom: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+    .input-full { width: 100%; }
+    .customer-locked { background-color: #f8f9fa; color: #6c757d; cursor: not-allowed; }
+    
+    button { padding: 12px; font-size: 16px; border-radius: 6px; border: none; cursor: pointer; font-weight: bold; transition: 0.2s; }
+    .btn-add { background-color: #00796b; color: white; width: 100%; }
+    .btn-confirm { background-color: #2e7d32; color: white; width: 100%; margin-top: 10px; }
+    .btn-edit { font-size: 11px; padding: 4px 8px; background: #607d8b; color: white; }
+
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th { background: #f8f9fa; padding: 8px; border-bottom: 2px solid #dee2e6; text-align: left; }
+    td { padding: 8px; border-bottom: 1px solid #eee; }
+    
+    .datetime-display { font-size: 12px; color: #555; background: #e0f2f1; padding: 4px 8px; border-radius: 4px; font-family: monospace; }
+    .totals-area { background: #e8f5e9; padding: 10px; border-radius: 6px; margin-top: 10px; }
+    #itemPreview { font-size: 13px; color: #00796b; min-height: 18px; margin-bottom: 5px; font-weight: bold; }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <div style="font-size: 18px; font-weight: bold;">🏥 Bismillah Pharmacy POS</div>
+  <div class="nav">
+    <a href="index.html">Sales</a> | <a href="inventory.html">Inventory</a> | <a href="supplier.html">Supplier</a> | <a href="report.html">Report</a>
+  </div>
+</div>
+
+<div class="main-grid">
+  <div class="panel-left">
+    <h3>
+      Patient Info
+      <button id="editBtn" class="btn-edit" onclick="toggleCustomer(false)" style="display:none;">Edit Name</button>
+    </h3>
+    <div style="display: flex; gap: 5px;">
+      <input id="customer" class="input-full" placeholder="Enter Full Name" onblur="if(this.value) toggleCustomer(true)">
+    </div>
+
+    <h3>Medication Entry</h3>
+    <input id="code" class="input-full" placeholder="Med Code (M001-M006)" oninput="checkItem()">
+    <div id="itemPreview"></div>
+    
+    <div style="display: flex; gap: 5px;">
+      <input id="qty" placeholder="Qty" type="number" style="flex: 1;">
+      <select id="unitType" style="flex: 1.5;">
+        <option value="Tablets">Tablets</option>
+        <option value="Strips">Strips</option>
+        <option value="Boxes">Boxes</option>
+        <option value="Bottles">Bottles</option>
+        <option value="Capsules">Capsules</option>
+      </select>
+    </div>
+    
+    <button class="btn-add" onclick="addItem()">➕ Add to Cart</button>
+
+    <div class="totals-area">
+      <input id="paid" class="input-full" placeholder="Cash Received ($)">
+      <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 14px;">
+        <span>Change Due:</span>
+        <span id="change">$0.00</span>
+      </div>
+    </div>
+    
+    <button class="btn-confirm" onclick="confirmSale()">✅ Finalize Transaction</button>
+  </div>
+
+  <div class="panel-right">
+    <h3 style="display: flex; align-items: center; justify-content: space-between;">
+      Order Summary
+      <span id="liveClock" class="datetime-display"></span>
+    </h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Medication</th>
+          <th>Qty/Unit</th>
+          <th>Total</th>
+        </tr>
+      </thead>
+      <tbody id="cartTable"></tbody>
+    </table>
+    
+    <div style="text-align: right; margin-top: 15px; border-top: 2px solid #004d40; padding-top: 5px;">
+      <h2 id="subtotal" style="margin: 0; color: #004d40;">Total: $0.00</h2>
+    </div>
+  </div>
+</div>
+
+<script>
+const items = {
+  "M001": { name: "Acmecilin", generic: "Acmecilin Sodium", size: "250mg", price: 12.50 },
+  "M002": { name: "Paracetamol", generic: "Acetaminophen", size: "500mg", price: 5.00 },
+  "M003": { name: "Amoxicillin", generic: "Amoxicillin Trihydrate", size: "125mg/5ml", price: 18.00 },
+  "M004": { name: "Cetirizine", generic: "Cetirizine Hydrochloride", size: "10mg", price: 8.50 },
+  "M005": { name: "Ibuprofen", generic: "Ibuprofen", size: "200mg", price: 6.00 },
+  "M006": { name: "Gaviscon", generic: "Sodium Alginate", size: "150ml", price: 14.00 }
+};
+
+let inventory = JSON.parse(localStorage.getItem("inventory")) || { "M001": 100, "M002": 100, "M003": 100, "M004": 100, "M005": 100, "M006": 100 };
+let sales = JSON.parse(localStorage.getItem("sales")) || [];
+let cart = [];
+let subtotal = 0;
+
+// Clock Function
+function updateClock() {
+  const now = new Date();
+  document.getElementById('liveClock').innerText = now.toLocaleDateString() + " " + now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// Customer Lock/Edit Toggle
+function toggleCustomer(lock) {
+  const input = document.getElementById("customer");
+  const editBtn = document.getElementById("editBtn");
+  input.disabled = lock;
+  if (lock) {
+    input.classList.add("customer-locked");
+    editBtn.style.display = "inline-block";
+  } else {
+    input.classList.remove("customer-locked");
+    editBtn.style.display = "none";
+    input.focus();
+  }
+}
+
+function checkItem() {
+  const code = document.getElementById("code").value.toUpperCase();
+  const display = document.getElementById("itemPreview");
+  if (items[code]) {
+    display.innerText = `${items[code].name} (${items[code].size}) - $${items[code].price.toFixed(2)}`;
+  } else { display.innerText = ""; }
+}
+
+function addItem() {
+  const code = document.getElementById("code").value.toUpperCase();
+  const qty = parseInt(document.getElementById("qty").value);
+  const unit = document.getElementById("unitType").value;
+
+  if (!items[code] || !qty) return;
+  if (inventory[code] < qty) return alert("Insufficient stock!");
+
+  const item = items[code];
+  const total = item.price * qty;
+  cart.push({ ...item, code, qty, unit, total });
+  subtotal += total;
+  renderCart();
+  
+  document.getElementById("code").value = "";
+  document.getElementById("qty").value = "";
+  document.getElementById("itemPreview").innerText = "";
+}
+
+function renderCart() {
+  const tbody = document.getElementById("cartTable");
+  tbody.innerHTML = "";
+  cart.forEach(i => {
+    const row = tbody.insertRow();
+    row.innerHTML = `
+      <td><b>${i.name}</b><br><small style="color:#666">${i.generic}</small></td>
+      <td>${i.qty} ${i.unit}</td>
+      <td>$${i.total.toFixed(2)}</td>
+    `;
+  });
+  document.getElementById("subtotal").innerText = "Total: $" + subtotal.toFixed(2);
+}
+
+document.getElementById("paid").oninput = function() {
+  const paid = parseFloat(this.value) || 0;
+  const change = paid - subtotal;
+  document.getElementById("change").innerText = "$" + (change > 0 ? change.toFixed(2) : "0.00");
+};
+
+function confirmSale() {
+  const customer = document.getElementById("customer").value;
+  if (!customer || cart.length === 0) return alert("Verify Customer and Cart.");
+
+  const now = new Date().toLocaleString();
+  cart.forEach(i => {
+    inventory[i.code] -= i.qty;
+    sales.push({ ...i, customer, time: now });
+  });
+
+  localStorage.setItem("inventory", JSON.stringify(inventory));
+  localStorage.setItem("sales", JSON.stringify(sales));
+  alert("✅ Recorded Successfully.");
+  location.reload();
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Receipts</title>
+  <style>
+    body {
+      font-family: Arial;
+      background-color: #f5f5f5;
+      text-align: center;
+    }
+
+    .container {
+      max-width: 700px;
+      margin: auto;
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+    }
+
+    .receiptCard {
+      background: #fafafa;
+      padding: 15px;
+      margin: 10px;
+      border-radius: 10px;
+      text-align: left;
+    }
+
+    button {
+      padding: 8px 12px;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+
+  <h2>📜 Saved Receipts</h2>
+
+  <div id="receiptList"></div>
+
+</div>
+
+<script>
+const receipts = JSON.parse(localStorage.getItem("receipts")) || [];
+
+const container = document.getElementById("receiptList");
+
+receipts.forEach((r, index) => {
+  const div = document.createElement("div");
+  div.className = "receiptCard";
+
+  let itemsHTML = "";
+
+  r.items.forEach(i => {
+    itemsHTML += `<div>${i.name} x${i.qty} = $${i.total}</div>`;
+  });
+
+  div.innerHTML = `
+    <strong>Customer:</strong> ${r.customer}<br>
+    <strong>Time:</strong> ${r.time}
+    <div>${itemsHTML}</div>
+    <button onclick="printReceipt(${index})">🖨 Print</button>
+  `;
+
+  container.appendChild(div);
+});
+
+function printReceipt(index) {
+  const r = receipts[index];
+
+  let content = `
+    <h2>Receipt</h2>
+    Customer: ${r.customer}<br>
+    Time: ${r.time}<br><br>
+  `;
+
+  r.items.forEach(i => {
+    content += `${i.name} x${i.qty} = $${i.total}<br>`;
+  });
+
+  const win = window.open("", "", "width=300,height=400");
+  win.document.write(content);
+  win.print();
+}
+</script>
+
+</body>
+</html>

@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Pharmacy Inventory Management</title>
+  <style>
+    body { font-family: 'Segoe UI', Arial, sans-serif; background-color: #f5f5f5; text-align: center; margin: 0; padding: 20px; }
+    .container { max-width: 1000px; margin: auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+    .nav { margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 15px; }
+    .nav a { margin: 0 15px; text-decoration: none; color: #00796b; font-weight: bold; }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    th, td { padding: 12px; border-bottom: 1px solid #eee; text-align: left; }
+    th { background: #004d40; color: white; }
+    .code-tag { background: #e0f2f1; color: #004d40; padding: 4px 8px; border-radius: 4px; font-family: monospace; font-weight: bold; border: 1px solid #b2dfdb; }
+    .lowStock { color: #d32f2f; font-weight: bold; background: #ffebee; border-radius: 4px; padding: 2px 5px; }
+    .stock-controls { display: flex; align-items: center; gap: 5px; }
+    .btn-qty { padding: 5px 10px; cursor: pointer; border: 1px solid #ccc; background: #fff; border-radius: 4px; font-size: 12px; }
+    .manual-input { width: 50px; padding: 5px; text-align: center; border: 1px solid #ddd; border-radius: 4px; }
+    .btn-save { background: #00796b; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <div class="nav">
+    <a href="index.html">🏠 Sales</a> | 
+    <a href="inventory.html" style="color: #000;">📊 Inventory</a> | 
+    <a href="supplier.html">📦 Supplier</a> | 
+    <a href="report.html">📈 Report</a>
+  </div>
+
+  <h2>📊 Medication Stock & Code Reference</h2>
+  <p style="color: #666; font-size: 14px;">Reference the <b>Item Code</b> below for use on the Sales page.</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Item Code</th>
+        <th>Medication Name</th>
+        <th>Generic / Size</th>
+        <th>Stock Level</th>
+        <th>Quick Adjust</th>
+      </tr>
+    </thead>
+    <tbody id="inventoryList"></tbody>
+  </table>
+</div>
+
+<script>
+const items = {
+  "M001": { name: "Acmecilin", generic: "Acmecilin Sodium", size: "250mg" },
+  "M002": { name: "Paracetamol", generic: "Acetaminophen", size: "500mg" },
+  "M003": { name: "Amoxicillin", generic: "Amoxicillin Trihydrate", size: "125mg/5ml" },
+  "M004": { name: "Cetirizine", generic: "Cetirizine Hydrochloride", size: "10mg" },
+  "M005": { name: "Ibuprofen", generic: "Ibuprofen", size: "200mg" },
+  "M006": { name: "Gaviscon", generic: "Sodium Alginate", size: "150ml" }
+};
+
+let inventory = JSON.parse(localStorage.getItem("inventory")) || { 
+  "M001": 100, "M002": 100, "M003": 100, "M004": 100, "M005": 100, "M006": 100 
+};
+
+function renderInventory() {
+  const tbody = document.getElementById("inventoryList");
+  tbody.innerHTML = "";
+
+  for (let code in items) {
+    const qty = inventory[code] || 0;
+    const row = tbody.insertRow();
+    
+    row.innerHTML = `
+      <td><span class="code-tag">${code}</span></td>
+      <td><b>${items[code].name}</b></td>
+      <td style="font-size: 13px; color: #666;">${items[code].generic}<br>${items[code].size}</td>
+      <td><span class="${qty < 20 ? 'lowStock' : ''}">${qty} units</span></td>
+      <td>
+        <div class="stock-controls">
+          <button class="btn-qty" onclick="adjustStock('${code}', 10)">+10</button>
+          <input type="number" id="input-${code}" class="manual-input" placeholder="Set">
+          <button class="btn-save" onclick="setStock('${code}')">Update</button>
+        </div>
+      </td>
+    `;
+  }
+}
+
+function adjustStock(code, amount) {
+  inventory[code] = (inventory[code] || 0) + amount;
+  saveAndRefresh();
+}
+
+function setStock(code) {
+  const input = document.getElementById(`input-${code}`);
+  const newValue = parseInt(input.value);
+  if (isNaN(newValue) || newValue < 0) return alert("Enter a valid number");
+  inventory[code] = newValue;
+  saveAndRefresh();
+}
+
+function saveAndRefresh() {
+  localStorage.setItem("inventory", JSON.stringify(inventory));
+  renderInventory();
+}
+
+renderInventory();
+</script>
+
+</body>
+</html>

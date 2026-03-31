@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Pharmacy Sales Report</title>
+  <style>
+    body { font-family: Arial; background-color: #f4f6f9; text-align: center; }
+    .container { max-width: 950px; margin: auto; background: white; padding: 20px; border-radius: 12px; }
+    .stats { display: flex; justify-content: space-around; margin-bottom: 20px; }
+    .card { background: #00796b; color: white; padding: 20px; border-radius: 10px; width: 30%; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 12px; border-bottom: 1px solid #ddd; text-align: left; }
+    th { background-color: #004d40; color: white; }
+    .nav a { margin: 10px; text-decoration: none; font-weight: bold; color: #00796b; }
+  </style>
+</head>
+<body>
+<div class="container">
+  <h2>📈 Daily Pharmacy Report</h2>
+  <div class="nav"><a href="index.html">Sales</a> | <a href="inventory.html">Inventory</a> | <a href="supplier.html">Supplier</a></div>
+  
+  <div class="stats">
+    <div class="card" id="revenueCard">Revenue: $0</div>
+    <div class="card" id="profitCard">Profit: $0</div>
+    <div class="card" id="itemsCard">Meds Sold: 0</div>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Customer</th>
+        <th>Medication</th>
+        <th>Size</th>
+        <th>Total ($)</th>
+        <th>Time</th>
+      </tr>
+    </thead>
+    <tbody id="salesTable"></tbody>
+  </table>
+  <button onclick="localStorage.clear(); location.reload();" style="margin-top:20px; padding:10px; background:#f44336; color:white; border:none; border-radius:5px; cursor:pointer;">Reset All Data</button>
+</div>
+
+<script>
+const items = {
+  "M001": { cost: 8.00 }, "M002": { cost: 2.50 }, "M003": { cost: 11.00 }, "M004": { cost: 4.00 }
+};
+
+let sales = JSON.parse(localStorage.getItem("sales")) || [];
+let rev = 0, prof = 0, count = 0;
+const table = document.getElementById("salesTable");
+
+sales.forEach(s => {
+  const row = table.insertRow();
+  row.innerHTML = `<td>${s.customer}</td><td>${s.name}</td><td>${s.size}</td><td>$${s.total.toFixed(2)}</td><td>${s.time}</td>`;
+  rev += s.total;
+  count += s.qty;
+  prof += (s.total - (items[s.code].cost * s.qty));
+});
+
+document.getElementById("revenueCard").innerText = "Revenue: $" + rev.toFixed(2);
+document.getElementById("profitCard").innerText = "Profit: $" + prof.toFixed(2);
+document.getElementById("itemsCard").innerText = "Meds Sold: " + count;
+</script>
+</body>
+</html>
