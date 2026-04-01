@@ -36,12 +36,11 @@
     </thead>
     <tbody id="salesTable"></tbody>
   </table>
-  <button onclick="localStorage.clear(); location.reload();" style="margin-top:20px; padding:10px; background:#f44336; color:white; border:none; border-radius:5px; cursor:pointer;">Reset All Data</button>
 </div>
 
 <script>
-const items = {
-  "M001": { cost: 8.00 }, "M002": { cost: 2.50 }, "M003": { cost: 11.00 }, "M004": { cost: 4.00 }
+const itemCosts = {
+  "M001": 8.00, "M002": 2.50, "M003": 11.00, "M004": 4.00, "M005": 3.50, "M006": 9.00
 };
 
 let sales = JSON.parse(localStorage.getItem("sales")) || [];
@@ -53,7 +52,8 @@ sales.forEach(s => {
   row.innerHTML = `<td>${s.customer}</td><td>${s.name}</td><td>${s.size}</td><td>$${s.total.toFixed(2)}</td><td>${s.time}</td>`;
   rev += s.total;
   count += s.qty;
-  prof += (s.total - (items[s.code].cost * s.qty));
+  const cost = (itemCosts[s.code] || 0) * s.qty;
+  prof += (s.total - cost);
 });
 
 document.getElementById("revenueCard").innerText = "Revenue: $" + rev.toFixed(2);
