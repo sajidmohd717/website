@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Bismillah Pharmacy - Supplier Purchase</title>
+  <style>
+    body { font-family: 'Segoe UI', sans-serif; background-color: #f0f2f5; margin: 0; padding: 10px; }
+    .header { background: #1565c0; color: white; padding: 10px; display: flex; justify-content: space-between; align-items: center; border-radius: 8px; margin-bottom: 10px; }
+    .nav a { margin-left: 15px; color: #bbdefb; text-decoration: none; font-size: 14px; font-weight: bold; }
+    .main-grid { display: flex; gap: 15px; max-width: 1200px; margin: auto; }
+    .panel { background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); flex: 1; }
+    h3 { margin: 0 0 10px 0; color: #1565c0; border-bottom: 1px solid #eee; }
+    input, select { padding: 10px; font-size: 15px; margin-bottom: 8px; border: 1px solid #ccc; border-radius: 4px; width: 100%; box-sizing: border-box; }
+    button { padding: 12px; font-size: 16px; border-radius: 6px; border: none; cursor: pointer; font-weight: bold; width: 100%; background: #1e88e5; color: white; }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    th { background: #f8f9fa; padding: 8px; border-bottom: 2px solid #dee2e6; text-align: left; }
+    td { padding: 8px; border-bottom: 1px solid #eee; }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <div style="font-size: 18px; font-weight: bold;">🚛 Supplier Buy (Restock)</div>
+  <div class="nav">
+    <a href="index.html">Sales</a> | <a href="buy.html">Buy (Supplier)</a> | <a href="inventory.html">Inventory</a> | <a href="report.html">Report</a>
+  </div>
+</div>
+
+<div class="main-grid">
+  <div class="panel">
+    <h3>Purchase Entry</h3>
+    <input id="supplier" placeholder="Supplier Name">
+    <select id="medSelect" onchange="document.getElementById('code').value = this.value">
+      <option value="">-- Select Med --</option>
+      <option value="M001">Acmecilin</option>
+      <option value="M002">Paracetamol</option>
+      <option value="M003">Amoxicillin</option>
+      <option value="M004">Cetirizine</option>
+      <option value="M005">Ibuprofen</option>
+      <option value="M006">Gaviscon</option>
+    </select>
+    <input id="code" placeholder="Med Code" readonly style="background:#eee">
+    <input id="cost" type="number" placeholder="Buying Price (How much you paid)">
+    <input id="qty" type="number" placeholder="Quantity Bought">
+    <button onclick="addPurchase()">✅ Confirm Purchase</button>
+  </div>
+
+  <div class="panel" style="flex: 1.5;">
+    <h3>Recent Purchase History</h3>
+    <table id="pTable">
+      <thead><tr><th>Date</th><th>Supplier</th><th>Item</th><th>Qty</th><th>Total Cost</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+function addPurchase() {
+  const s = document.getElementById("supplier").value;
+  const c = document.getElementById("code").value;
+  const cost = parseFloat(document.getElementById("cost").value);
+  const q = parseInt(document.getElementById("qty").value);
+
+  if(!s || !c || !cost || !q) return alert("Fill all fields");
+
+  let inventory = JSON.parse(localStorage.getItem("inventory")) || {};
+  let purchases = JSON.parse(localStorage.getItem("purchases")) || [];
+  
+  const total = cost * q;
+  const entry = { date: new Date().toLocaleString(), supplier: s, code: c, qty: q, total: total };
+
+  inventory[c] = (inventory[c] || 0) + q;
+  purchases.push(entry);
+
+  localStorage.setItem("inventory", JSON.stringify(inventory));
+  localStorage.setItem("purchases", JSON.stringify(purchases));
+  
+  alert("Stock Updated and Purchase Logged!");
+  location.reload();
+}
+
+// Load history
+const purchases = JSON.parse(localStorage.getItem("purchases")) || [];
+const tbody = document.querySelector("#pTable tbody");
+purchases.reverse().forEach(p => {
+  tbody.innerHTML += `<tr><td>${p.date}</td><td>${p.supplier}</td><td>${p.code}</td><td>${p.qty}</td><td>$${p.total.toFixed(2)}</td></tr>`;
+});
+</script>
+</body>
+</html>
