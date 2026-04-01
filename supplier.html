@@ -4,18 +4,29 @@
   <title>Add Stock</title>
   <style>
     body { font-family: Arial; text-align: center; background-color: #f5f5f5; }
-    .container { max-width: 500px; margin: auto; background: white; padding: 20px; border-radius: 12px; margin-top: 20px; }
-    input { width: 85%; padding: 15px; font-size: 18px; margin: 10px; border-radius: 8px; border: 1px solid #ccc; text-align: center; }
-    button { width: 90%; padding: 15px; font-size: 18px; background-color: #2196F3; color: white; border: none; border-radius: 10px; cursor: pointer; }
-    .nav a { margin: 10px; text-decoration: none; color: #2196F3; font-weight: bold; }
+    .container { max-width: 500px; margin: auto; background: white; padding: 20px; border-radius: 12px; margin-top: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+    input, select { width: 90%; padding: 15px; font-size: 16px; margin: 10px; border-radius: 8px; border: 1px solid #ccc; text-align: center; }
+    button { width: 90%; padding: 15px; font-size: 18px; background-color: #00796b; color: white; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; }
+    .nav a { margin: 10px; text-decoration: none; color: #00796b; font-weight: bold; }
   </style>
 </head>
 <body>
 <div class="container">
   <h2>📦 Supplier (Restock Meds)</h2>
   <div class="nav"><a href="index.html">Sales</a> | <a href="inventory.html">Inventory</a> | <a href="report.html">Report</a></div>
-  <input id="code" placeholder="Enter Med Code (M001-M006)" oninput="checkItem()">
-  <div id="itemName" style="font-weight: bold; margin: 10px; color: #2196F3;"></div>
+  
+  <select id="medSelect" onchange="document.getElementById('code').value = this.value; checkItem();">
+    <option value="">-- Select Med to Restock --</option>
+    <option value="M001">Acmecilin</option>
+    <option value="M002">Paracetamol</option>
+    <option value="M003">Amoxicillin</option>
+    <option value="M004">Cetirizine</option>
+    <option value="M005">Ibuprofen</option>
+    <option value="M006">Gaviscon</option>
+  </select>
+
+  <input id="code" placeholder="Or Enter Med Code (M001-M006)" oninput="checkItem()">
+  <div id="itemName" style="font-weight: bold; margin: 10px; color: #00796b;"></div>
   <input id="qty" type="number" placeholder="Quantity to Add">
   <button onclick="addStock()">➕ Update Inventory</button>
 </div>
@@ -39,11 +50,11 @@ function checkItem() {
 function addStock() {
   const code = document.getElementById("code").value.toUpperCase();
   const qty = parseInt(document.getElementById("qty").value);
-  if (!items[code] || !qty) return alert("Invalid entry");
+  if (!items[code] || !qty || qty <= 0) return alert("Invalid entry");
 
   inventory[code] = (inventory[code] || 0) + qty;
   localStorage.setItem("inventory", JSON.stringify(inventory));
-  alert("Stock Added!");
+  alert("Stock Added Successfully!");
   location.reload();
 }
 </script>
