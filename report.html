@@ -1,162 +1,60 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Daily Sales Report</title>
+  <title>Financial Report</title>
   <style>
-    body {
-      font-family: Arial;
-      background-color: #f4f6f9;
-      text-align: center;
-    }
-
-    .container {
-      max-width: 900px;
-      margin: auto;
-      background: white;
-      padding: 20px;
-      border-radius: 12px;
-      box-shadow: 0px 0px 10px rgba(0,0,0,0.1);
-    }
-
-    h2 {
-      margin-bottom: 20px;
-    }
-
-    .stats {
-      display: flex;
-      justify-content: space-around;
-      margin-bottom: 20px;
-    }
-
-    .card {
-      background: #4CAF50;
-      color: white;
-      padding: 20px;
-      border-radius: 10px;
-      width: 30%;
-      font-size: 18px;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-    }
-
-    th, td {
-      padding: 12px;
-      border-bottom: 1px solid #ddd;
-    }
-
-    th {
-      background-color: #4CAF50;
-      color: white;
-    }
-
-    .nav a {
-      margin: 10px;
-    }
-
-    button {
-      padding: 10px 20px;
-      margin-top: 15px;
-      font-size: 16px;
-      border-radius: 8px;
-      border: none;
-      background-color: #f44336;
-      color: white;
-    }
-
-    button:hover {
-      background-color: #d32f2f;
-    }
+    body { font-family: Arial, sans-serif; background-color: #f4f6f9; padding: 20px; }
+    .container { max-width: 1000px; margin: auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); text-align: center; }
+    .nav { margin-bottom: 20px; }
+    .nav a { margin: 0 10px; text-decoration: none; color: #00796b; font-weight: bold; }
+    .stats { display: flex; justify-content: space-around; margin: 20px 0; }
+    .card { padding: 20px; border-radius: 10px; width: 28%; color: white; font-weight: bold; font-size: 20px; }
+    .sales-card { background: #2e7d32; }
+    .buy-card { background: #c62828; }
+    .profit-card { background: #1565c0; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { padding: 12px; border: 1px solid #ddd; text-align: left; }
+    th { background: #eee; }
   </style>
 </head>
 <body>
-
 <div class="container">
-
-  <h2>📊 Daily Sales Dashboard</h2>
-
+  <h2>📈 Pharmacy Profit & Loss</h2>
   <div class="nav">
-    <a href="index.html">Sales</a> |
-    <a href="supplier.html">Supplier</a> |
-    <a href="inventory.html">Inventory</a>
+    <a href="index.html">Sales</a> | <a href="buy.html">Buy (Supplier)</a> | <a href="inventory.html">Inventory</a>
   </div>
 
-  <!-- Summary Cards -->
   <div class="stats">
-    <div class="card" id="revenueCard">Revenue: $0</div>
-    <div class="card" id="itemsCard">Items Sold: 0</div>
-    <div class="card" id="profitCard">Profit: $0</div>
+    <div class="card sales-card" id="sTotal">Revenue: $0</div>
+    <div class="card buy-card" id="bTotal">Expenses: $0</div>
+    <div class="card profit-card" id="pTotal">Net Profit: $0</div>
   </div>
 
-  <!-- Table -->
-  <h3>Sales Details</h3>
-
-  <table>
-    <thead>
-      <tr>
-        <th>Item</th>
-        <th>Price ($)</th>
-        <th>Qty</th>
-        <th>Total ($)</th>
-        <th>Time</th>
-      </tr>
-    </thead>
-    <tbody id="salesTable"></tbody>
+  <h3>Recent Sales</h3>
+  <table id="salesTable">
+    <thead><tr><th>Time</th><th>Customer</th><th>Item</th><th>Qty</th><th>Total</th></tr></thead>
+    <tbody></tbody>
   </table>
-
-  <button onclick="clearData()">Reset Day</button>
-
 </div>
 
 <script>
-// Same item list
-const items = {
-  1: { name: "Apple", price: 5, cost: 3 },
-  2: { name: "Grapes", price: 10, cost: 6 },
-  3: { name: "Orange", price: 7, cost: 4 }
-};
+  const sales = JSON.parse(localStorage.getItem("sales")) || [];
+  const purchases = JSON.parse(localStorage.getItem("purchases")) || [];
 
-// Load saved sales
-let sales = JSON.parse(localStorage.getItem("sales")) || [];
+  let totalSales = 0;
+  let totalSpent = 0;
 
-let totalRevenue = 0;
-let totalItems = 0;
-let totalProfit = 0;
+  const sBody = document.querySelector("#salesTable tbody");
+  sales.reverse().forEach(s => {
+    totalSales += s.total;
+    sBody.innerHTML += `<tr><td>${s.time}</td><td>${s.customer}</td><td>${s.name}</td><td>${s.qty}</td><td>$${s.total.toFixed(2)}</td></tr>`;
+  });
 
-const table = document.getElementById("salesTable");
+  purchases.forEach(p => totalSpent += p.total);
 
-sales.forEach(sale => {
-  const row = table.insertRow();
-
-  row.insertCell(0).innerText = sale.name;
-  row.insertCell(1).innerText = sale.price;
-  row.insertCell(2).innerText = sale.qty;
-  row.insertCell(3).innerText = sale.total;
-  row.insertCell(4).innerText = sale.time;
-
-  totalRevenue += sale.total;
-  totalItems += sale.qty;
-
-  // Profit = selling - cost
-  const cost = items[sale.code].cost * sale.qty;
-  totalProfit += (sale.total - cost);
-});
-
-// Update UI
-document.getElementById("revenueCard").innerText = "Revenue: $" + totalRevenue;
-document.getElementById("itemsCard").innerText = "Items Sold: " + totalItems;
-document.getElementById("profitCard").innerText = "Profit: $" + totalProfit;
-
-// Reset system
-function clearData() {
-  if (confirm("Reset all data for today?")) {
-    localStorage.clear();
-    location.reload();
-  }
-}
+  document.getElementById("sTotal").innerText = "Revenue: $" + totalSales.toFixed(2);
+  document.getElementById("bTotal").innerText = "Expenses: $" + totalSpent.toFixed(2);
+  document.getElementById("pTotal").innerText = "Net Profit: $" + (totalSales - totalSpent).toFixed(2);
 </script>
-
 </body>
 </html>
