@@ -9,7 +9,7 @@
     .main-grid { display: flex; gap: 15px; max-width: 1200px; margin: auto; }
     .panel-left { flex: 1; background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
     .panel-right { flex: 1.5; background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-    h3 { margin: 0 0 10px 0; color: #004d40; border-bottom: 1px solid #eee; }
+    h3 { margin: 0 0 10px 0; color: #004d40; border-bottom: 1px solid #eee; padding-bottom: 6px; }
     input, select { padding: 10px; font-size: 15px; margin-bottom: 8px; border: 1px solid #ccc; border-radius: 4px; width: 100%; box-sizing: border-box; }
     button { padding: 12px; font-size: 16px; border-radius: 6px; border: none; cursor: pointer; font-weight: bold; width: 100%; }
     .btn-add { background-color: #00796b; color: white; }
@@ -17,6 +17,18 @@
     table { width: 100%; border-collapse: collapse; }
     th { background: #f8f9fa; padding: 8px; border-bottom: 2px solid #dee2e6; text-align: left; }
     td { padding: 8px; border-bottom: 1px solid #eee; }
+
+    /* Payment Panel */
+    .payment-box { margin-top: 18px; background: #f9fbe7; border: 1px solid #c5e1a5; border-radius: 8px; padding: 14px; }
+    .payment-box h3 { color: #33691e; border-bottom: 1px solid #c5e1a5; }
+    .payment-box input { border: 1px solid #aed581; }
+    .result-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #e0e0e0; font-size: 15px; }
+    .result-row:last-child { border-bottom: none; }
+    .result-label { color: #555; }
+    .result-value { font-weight: bold; font-size: 17px; }
+    .change-positive { color: #2e7d32; }
+    .change-negative { color: #c62828; }
+    .change-zero { color: #555; }
   </style>
 </head>
 <body>
@@ -65,7 +77,26 @@
       <thead><tr><th>Item</th><th>Qty</th><th>Total</th></tr></thead>
       <tbody id="cartTable"></tbody>
     </table>
-    <h2 id="subtotal" style="text-align: right; color: #004d40;">Total: $0.00</h2>
+    <h2 id="subtotal" style="text-align: right; color: #004d40; margin: 10px 0 0 0;">Total: $0.00</h2>
+
+    <!-- Payment Panel -->
+    <div class="payment-box">
+      <h3>💵 Payment</h3>
+      <input id="cashGiven" type="number" placeholder="Cash Given by Customer ($)" oninput="calcChange()" min="0" step="0.01">
+
+      <div class="result-row">
+        <span class="result-label">Amount Due</span>
+        <span class="result-value" id="payAmountDue">$0.00</span>
+      </div>
+      <div class="result-row">
+        <span class="result-label">Cash Given</span>
+        <span class="result-value" id="payCashGiven">$0.00</span>
+      </div>
+      <div class="result-row" style="margin-top: 4px;">
+        <span class="result-label" id="changeLabel" style="font-weight: bold;">Change</span>
+        <span class="result-value" id="changeDisplay" style="font-size: 20px;">—</span>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -95,6 +126,7 @@ function addItem() {
   cart.push({ code: c, name: items[c].name, qty: q, total: lineTotal });
   totalAmount += lineTotal;
   renderCart();
+  calcChange();
 }
 
 function renderCart() {
@@ -104,11 +136,44 @@ function renderCart() {
     tb.innerHTML += `<tr><td>${i.name}</td><td>${i.qty}</td><td>$${i.total.toFixed(2)}</td></tr>`;
   });
   document.getElementById("subtotal").innerText = "Total: $" + totalAmount.toFixed(2);
+  document.getElementById("payAmountDue").innerText = "$" + totalAmount.toFixed(2);
+}
+
+function calcChange() {
+  const given = parseFloat(document.getElementById("cashGiven").value) || 0;
+  const diff = given - totalAmount;
+
+  document.getElementById("payCashGiven").innerText = "$" + given.toFixed(2);
+  document.getElementById("payAmountDue").innerText = "$" + totalAmount.toFixed(2);
+
+  const changeDisplay = document.getElementById("changeDisplay");
+  const changeLabel = document.getElementById("changeLabel");
+
+  if (given === 0 || totalAmount === 0) {
+    changeDisplay.innerText = "—";
+    changeDisplay.className = "result-value change-zero";
+    changeLabel.innerText = "Change";
+  } else if (diff > 0) {
+    changeDisplay.innerText = "$" + diff.toFixed(2);
+    changeDisplay.className = "result-value change-positive";
+    changeLabel.innerText = "✅ Change to Return";
+  } else if (diff < 0) {
+    changeDisplay.innerText = "$" + Math.abs(diff).toFixed(2);
+    changeDisplay.className = "result-value change-negative";
+    changeLabel.innerText = "⚠️ Customer Still Owes";
+  } else {
+    changeDisplay.innerText = "Exact ✓";
+    changeDisplay.className = "result-value change-zero";
+    changeLabel.innerText = "💯 Change";
+  }
 }
 
 function confirmSale() {
   const cust = document.getElementById("customer").value;
   if (!cust || cart.length === 0) return alert("Add items and customer name");
+
+  const given = parseFloat(document.getElementById("cashGiven").value) || 0;
+  if (given === 0) return alert("Please enter the cash given by the customer.");
 
   let sales = JSON.parse(localStorage.getItem("sales")) || [];
   const date = new Date().toLocaleString();
@@ -120,7 +185,12 @@ function confirmSale() {
 
   localStorage.setItem("inventory", JSON.stringify(inventory));
   localStorage.setItem("sales", JSON.stringify(sales));
-  alert("Sale Recorded!");
+
+  const diff = given - totalAmount;
+  const msg = diff >= 0
+    ? `Sale recorded!\nChange to return: $${diff.toFixed(2)}`
+    : `Sale recorded!\n⚠️ Customer still owes: $${Math.abs(diff).toFixed(2)}`;
+  alert(msg);
   location.reload();
 }
 </script>
