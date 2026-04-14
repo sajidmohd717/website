@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="invoice-container">
+        <header>
+            <h1>Bismillah Online Business Singapore</h1>
+            <p>641, Jurong West Street 61, Singapore 640641</p>
+            <div class="invoice-title">INVOICE</div>
+        </header>
+        
+        <table id="invoice-table">
+            <tr>
+                <th>Product Name</th>
+                <th>Quantity</th>
+                <th>Rate</th>
+                <th>Price</th>
+            </tr>
+            <tr>
+                <td><input type="text" value="Cefotil 125 Tablet"></td>
+                <td><input type="number" class="qty" value="0"></td>
+                <td><input type="number" class="rate" value="21.00"></td>
+                <td class="total">0.00</td>
+            </tr>
+        </table>
+        
+        <div class="summary">
+            <div class="buy-row">Sub Total: <span id="subtotal">0.00</span></div>
+        </div>
+    </div>
+</body>
+</html>header { background-color: #FFFF00; text-align: center; padding: 10px; }
+.invoice-title { background-color: #FF00FF; color: black; font-weight: bold; }
+th { background-color: white; border: 1px solid black; }
+.buy-row { background-color: #FF00FF; }
+/* Use Flexbox or Grid to align your bottom 'Stock' and 'Sell' bars */
