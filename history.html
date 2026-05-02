@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Bismillah Pharmacy - History</title>
+  <style>
+    body { font-family: 'Segoe UI', sans-serif; background-color: #f0f2f5; margin: 0; padding: 10px; }
+    .header { background: #004d40; color: white; padding: 10px; display: flex; justify-content: space-between; align-items: center; border-radius: 8px; margin-bottom: 10px; }
+    .nav a { margin-left: 15px; color: #b2dfdb; text-decoration: none; font-size: 14px; font-weight: bold; }
+    .container { max-width: 1100px; margin: auto; }
+
+    .tabs { display: flex; gap: 0; margin-bottom: 0; }
+    .tab-btn { padding: 11px 32px; font-size: 15px; font-weight: bold; border: none; cursor: pointer; border-radius: 8px 8px 0 0; background: #cfd8dc; color: #455a64; transition: background 0.2s; }
+    .tab-btn.active { background: white; color: #004d40; }
+
+    .tab-panel { display: none; background: white; border-radius: 0 8px 8px 8px; padding: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+    .tab-panel.active { display: block; }
+
+    .summary-row { display: flex; gap: 15px; margin-bottom: 18px; }
+    .summary-card { flex: 1; padding: 14px 18px; border-radius: 8px; color: white; font-weight: bold; }
+    .card-green { background: #2e7d32; }
+    .card-blue { background: #1565c0; }
+    .card-teal { background: #00796b; }
+    .card-label { font-size: 12px; font-weight: normal; opacity: 0.85; margin-bottom: 4px; }
+    .card-value { font-size: 22px; }
+
+    .filter-bar { margin-bottom: 14px; }
+    .filter-bar input { width: 100%; padding: 9px 12px; font-size: 14px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+
+    .txn-card { border: 1px solid #e0e0e0; border-radius: 8px; margin-bottom: 12px; overflow: hidden; }
+    .txn-header { display: flex; justify-content: space-between; align-items: center; padding: 10px 16px; background: #f8f9fa; border-bottom: 1px solid #e0e0e0; cursor: pointer; user-select: none; }
+    .txn-header:hover { background: #e8f5e9; }
+    .txn-title { font-weight: bold; color: #004d40; font-size: 15px; }
+    .txn-meta { font-size: 12px; color: #777; margin-top: 2px; }
+    .txn-total { font-weight: bold; font-size: 16px; color: #2e7d32; }
+    .txn-items table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .txn-items td { padding: 8px 16px; border-bottom: 1px solid #f0f0f0; }
+    .txn-items tr:last-child td { border-bottom: none; }
+    .txn-items th { padding: 7px 16px; background: #f1f8f7; color: #555; text-align: left; font-size: 12px; font-weight: 600; }
+    .collapse { display: none; }
+
+    .empty { text-align: center; color: #aaa; padding: 40px; font-size: 14px; }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <div style="font-size: 18px; font-weight: bold;">📋 Transaction History</div>
+  <div class="nav">
+    <a href="index.html">Sell</a> | <a href="buy.html">Buy (Supplier)</a> | <a href="inventory.html">Inventory</a> | <a href="history.html">History</a>
+  </div>
+</div>
+
+<div class="container">
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('sales', this)">🧾 Past Sales</button>
+    <button class="tab-btn" onclick="switchTab('purchases', this)">🚛 Past Purchases</button>
+  </div>
+
+  <!-- SALES TAB -->
+  <div class="tab-panel active" id="tab-sales">
+    <div class="summary-row">
+      <div class="summary-card card-green"><div class="card-label">Total Revenue</div><div class="card-value" id="s-revenue">৳0</div></div>
+      <div class="summary-card card-teal"><div class="card-label">Transactions</div><div class="card-value" id="s-count">0</div></div>
+      <div class="summary-card card-blue"><div class="card-label">Units Sold</div><div class="card-value" id="s-units">0</div></div>
+    </div>
+    <div class="filter-bar">
+      <input id="sales-filter" placeholder="🔍 Filter by customer or medication..." oninput="renderSales()">
+    </div>
+    <div id="sales-list"></div>
+  </div>
+
+  <!-- PURCHASES TAB -->
+  <div class="tab-panel" id="tab-purchases">
+    <div class="summary-row">
+      <div class="summary-card card-blue"><div class="card-label">Total Spent</div><div class="card-value" id="p-spent">৳0</div></div>
+      <div class="summary-card card-teal"><div class="card-label">Orders</div><div class="card-value" id="p-count">0</div></div>
+      <div class="summary-card card-green"><div class="card-label">Units Restocked</div><div class="card-value" id="p-units">0</div></div>
+    </div>
+    <div class="filter-bar">
+      <input id="purchases-filter" placeholder="🔍 Filter by supplier or medication..." oninput="renderPurchases()">
+    </div>
+    <div id="purchases-list"></div>
+  </div>
+</div>
+
+<script src="medications.js"></script>
+<script>
+
+// ── Demo seed data ────────────────────────────────────────────────────────────
+
+const demoSales = [
+  { customer:"Rahim Uddin",    name:"Ace 500 Tablet",       code:"ANA004", strength:"500 mg",            qty:20, price:1.20,  total:24.00,  time:"4/28/2025, 9:12:04 AM" },
+  { customer:"Rahim Uddin",    name:"Seclo 20 Capsule",     code:"ULC020", strength:"20 mg",             qty:30, price:4.00,  total:120.00, time:"4/28/2025, 9:12:04 AM" },
+  { customer:"Rahim Uddin",    name:"Neuro-B Tablet",       code:"VIT025", strength:"100+200 mg+200 mcg",qty:30, price:8.00,  total:240.00, time:"4/28/2025, 9:12:04 AM" },
+  { customer:"Fatema Begum",   name:"Alatrol Tablet",       code:"ALG002", strength:"10 mg",             qty:10, price:3.00,  total:30.00,  time:"4/28/2025, 10:45:21 AM" },
+  { customer:"Fatema Begum",   name:"Motigut Tablet",       code:"GAS002", strength:"10 mg",             qty:20, price:4.00,  total:80.00,  time:"4/28/2025, 10:45:21 AM" },
+  { customer:"Karim Mia",      name:"Ciprocin 500 Tablet",  code:"ANT016", strength:"500 mg",            qty:14, price:14.00, total:196.00, time:"4/28/2025, 11:30:55 AM" },
+  { customer:"Karim Mia",      name:"Trupan 40 Tablet",     code:"ULC024", strength:"40 mg",             qty:30, price:14.00, total:420.00, time:"4/28/2025, 11:30:55 AM" },
+  { customer:"Karim Mia",      name:"Calbo-D Tablet",       code:"VIT011", strength:"500 mg+200 IU",     qty:30, price:8.00,  total:240.00, time:"4/28/2025, 11:30:55 AM" },
+  { customer:"Nasrin Akter",   name:"Trevox 500 Tablet",    code:"ANT078", strength:"500 mg",            qty:10, price:35.00, total:350.00, time:"4/28/2025, 1:05:33 PM" },
+  { customer:"Nasrin Akter",   name:"Alatrol Syrup",        code:"ALG001", strength:"5 mg/5ml",          qty:2,  price:35.00, total:70.00,  time:"4/28/2025, 1:05:33 PM" },
+  { customer:"Jamal Hossain",  name:"Camlodin 5 Tablet",    code:"CAR015", strength:"5 mg",              qty:30, price:4.00,  total:120.00, time:"4/29/2025, 8:55:09 AM" },
+  { customer:"Jamal Hossain",  name:"Ripril 5 Capsule",     code:"CAR053", strength:"5 mg",              qty:30, price:12.00, total:360.00, time:"4/29/2025, 8:55:09 AM" },
+  { customer:"Jamal Hossain",  name:"Angilock 50 Tablet",   code:"CAR002", strength:"50 mg",             qty:30, price:10.00, total:300.00, time:"4/29/2025, 8:55:09 AM" },
+  { customer:"Jamal Hossain",  name:"Anclog Tablet",        code:"CAR009", strength:"75 mg",             qty:30, price:15.00, total:450.00, time:"4/29/2025, 8:55:09 AM" },
+  { customer:"Sumaiya Khanam", name:"Zimax 500 Tablet",     code:"ANT086", strength:"500 mg",            qty:6,  price:55.00, total:330.00, time:"4/29/2025, 10:22:34 AM" },
+  { customer:"Sumaiya Khanam", name:"Moxacil 500 Capsule",  code:"ANT046", strength:"500 mg",            qty:21, price:9.00,  total:189.00, time:"4/29/2025, 10:22:34 AM" },
+  { customer:"Abdul Mannan",   name:"Ace Suspension",       code:"ANA002", strength:"120 mg/5ml",        qty:1,  price:50.00, total:50.00,  time:"4/30/2025, 9:05:27 AM" },
+  { customer:"Abdul Mannan",   name:"Loratin Tablet",       code:"ALG011", strength:"10 mg",             qty:10, price:4.00,  total:40.00,  time:"4/30/2025, 9:05:27 AM" },
+  { customer:"Abdul Mannan",   name:"Almex Tablet",         code:"HLM002", strength:"400 mg",            qty:2,  price:5.00,  total:10.00,  time:"4/30/2025, 9:05:27 AM" },
+  { customer:"Hasina Khatun",  name:"Fexo 120 Tablet",      code:"ALG009", strength:"120 mg",            qty:10, price:18.00, total:180.00, time:"4/30/2025, 1:45:39 PM" },
+  { customer:"Hasina Khatun",  name:"Flugal 150 Capsule",   code:"AMB004", strength:"150 mg",            qty:1,  price:30.00, total:30.00,  time:"4/30/2025, 1:45:39 PM" },
+  { customer:"Parveen Akter",  name:"Ripril 5 Capsule",     code:"CAR053", strength:"5 mg",              qty:30, price:12.00, total:360.00, time:"5/1/2025, 9:10:22 AM" },
+  { customer:"Parveen Akter",  name:"Loratin Tablet",       code:"ALG011", strength:"10 mg",             qty:10, price:4.00,  total:40.00,  time:"5/1/2025, 9:10:22 AM" },
+  { customer:"Parveen Akter",  name:"Calbo-D Tablet",       code:"VIT011", strength:"500 mg+200 IU",     qty:30, price:8.00,  total:240.00, time:"5/1/2025, 9:10:22 AM" },
+];
+
+const demoPurchases = [
+  { supplier:"Square Pharmaceuticals", name:"Ace 500 Tablet",      code:"ANA004", qty:500, total:350.00,  date:"4/25/2025, 8:00:00 AM" },
+  { supplier:"Square Pharmaceuticals", name:"Trevox 500 Tablet",   code:"ANT078", qty:100, total:2100.00, date:"4/25/2025, 8:00:00 AM" },
+  { supplier:"Square Pharmaceuticals", name:"Camlodin 5 Tablet",   code:"CAR015", qty:300, total:720.00,  date:"4/25/2025, 8:00:00 AM" },
+  { supplier:"Square Pharmaceuticals", name:"Trupan 40 Tablet",    code:"ULC024", qty:200, total:1680.00, date:"4/25/2025, 8:00:00 AM" },
+  { supplier:"Beximco Pharma",         name:"Alatrol Tablet",      code:"ALG002", qty:300, total:540.00,  date:"4/25/2025, 10:00:00 AM" },
+  { supplier:"Beximco Pharma",         name:"Fexo 120 Tablet",     code:"ALG009", qty:200, total:2160.00, date:"4/25/2025, 10:00:00 AM" },
+  { supplier:"Beximco Pharma",         name:"Angilock 50 Tablet",  code:"CAR002", qty:300, total:1800.00, date:"4/25/2025, 10:00:00 AM" },
+  { supplier:"Beximco Pharma",         name:"Loratin Tablet",      code:"ALG011", qty:300, total:720.00,  date:"4/25/2025, 10:00:00 AM" },
+  { supplier:"Opsonin Pharma",         name:"Ciprocin 500 Tablet", code:"ANT016", qty:200, total:1680.00, date:"4/26/2025, 9:00:00 AM" },
+  { supplier:"Opsonin Pharma",         name:"Zimax 500 Tablet",    code:"ANT086", qty:100, total:3300.00, date:"4/26/2025, 9:00:00 AM" },
+  { supplier:"Opsonin Pharma",         name:"Moxacil 500 Capsule", code:"ANT046", qty:420, total:2268.00, date:"4/26/2025, 9:00:00 AM" },
+  { supplier:"ACI Limited",            name:"Seclo 20 Capsule",    code:"ULC020", qty:400, total:960.00,  date:"4/27/2025, 8:30:00 AM" },
+  { supplier:"ACI Limited",            name:"Motigut Tablet",      code:"GAS002", qty:500, total:1200.00, date:"4/27/2025, 8:30:00 AM" },
+  { supplier:"ACI Limited",            name:"Neuro-B Tablet",      code:"VIT025", qty:300, total:1440.00, date:"4/27/2025, 8:30:00 AM" },
+  { supplier:"ACI Limited",            name:"Calbo-D Tablet",      code:"VIT011", qty:300, total:1440.00, date:"4/27/2025, 8:30:00 AM" },
+  { supplier:"Incepta Pharma",         name:"Ripril 5 Capsule",    code:"CAR053", qty:300, total:2160.00, date:"4/28/2025, 8:00:00 AM" },
+  { supplier:"Incepta Pharma",         name:"Anclog Tablet",       code:"CAR009", qty:200, total:1800.00, date:"4/28/2025, 8:00:00 AM" },
+  { supplier:"Incepta Pharma",         name:"Almex Tablet",        code:"HLM002", qty:500, total:1500.00, date:"4/28/2025, 8:00:00 AM" },
+];
+
+(function seedHistory() {
+  if (!localStorage.getItem("sales"))     localStorage.setItem("sales",     JSON.stringify(demoSales));
+  if (!localStorage.getItem("purchases")) localStorage.setItem("purchases", JSON.stringify(demoPurchases));
+})();
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+function groupBy(arr, keyFn) {
+  const map = new Map();
+  arr.forEach(item => {
+    const k = keyFn(item);
+    if (!map.has(k)) map.set(k, []);
+    map.get(k).push(item);
+  });
+  return Array.from(map.values());
+}
+
+function toggleItems(id) {
+  document.getElementById(id).classList.toggle("collapse");
+}
+
+function switchTab(tab, btn) {
+  document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+  document.querySelectorAll(".tab-panel").forEach(p => p.classList.remove("active"));
+  document.getElementById("tab-" + tab).classList.add("active");
+  btn.classList.add("active");
+}
+
+// ── Render Sales ──────────────────────────────────────────────────────────────
+
+function renderSales() {
+  const sales = JSON.parse(localStorage.getItem("sales")) || [];
+  const q = document.getElementById("sales-filter").value.toLowerCase();
+  const groups = groupBy(sales, s => s.customer + "|" + s.time);
+  const filtered = groups.filter(g =>
+    !q || g.some(s => s.customer.toLowerCase().includes(q) || s.name.toLowerCase().includes(q))
+  ).reverse();
+
+  const container = document.getElementById("sales-list");
+  if (filtered.length === 0) {
+    container.innerHTML = `<div class="empty">No sales records found</div>`;
+  } else {
+    container.innerHTML = filtered.map((g, i) => {
+      const groupTotal = g.reduce((sum, s) => sum + s.total, 0);
+      const totalQty   = g.reduce((sum, s) => sum + s.qty, 0);
+      const rows = g.map(s => `
+        <tr>
+          <td>${s.name}</td>
+          <td style="color:#777">${s.strength || "—"}</td>
+          <td>${s.qty} units</td>
+          <td>৳${s.price.toFixed(2)}</td>
+          <td><strong>৳${s.total.toFixed(2)}</strong></td>
+        </tr>`).join("");
+      return `
+        <div class="txn-card">
+          <div class="txn-header" onclick="toggleItems('s-items-${i}')">
+            <div>
+              <div class="txn-title">👤 ${g[0].customer}</div>
+              <div class="txn-meta">${g[0].time} &nbsp;·&nbsp; ${g.length} medication${g.length > 1 ? "s" : ""} &nbsp;·&nbsp; ${totalQty} units total</div>
+            </div>
+            <div class="txn-total">৳${groupTotal.toFixed(2)}</div>
+          </div>
+          <div class="txn-items" id="s-items-${i}">
+            <table>
+              <thead><tr><th>Medication</th><th>Strength</th><th>Qty</th><th>Unit Price</th><th>Total</th></tr></thead>
+              <tbody>${rows}</tbody>
+            </table>
+          </div>
+        </div>`;
+    }).join("");
+  }
+
+  const totalRev   = sales.reduce((sum, s) => sum + s.total, 0);
+  const totalUnits = sales.reduce((sum, s) => sum + s.qty, 0);
+  const txnCount   = groupBy(sales, s => s.customer + "|" + s.time).length;
+  document.getElementById("s-revenue").innerText = "৳" + totalRev.toFixed(2);
+  document.getElementById("s-count").innerText   = txnCount;
+  document.getElementById("s-units").innerText   = totalUnits;
+}
+
+// ── Render Purchases ──────────────────────────────────────────────────────────
+
+function renderPurchases() {
+  const purchases = JSON.parse(localStorage.getItem("purchases")) || [];
+  const q = document.getElementById("purchases-filter").value.toLowerCase();
+  const groups = groupBy(purchases, p => p.supplier + "|" + p.date);
+  const filtered = groups.filter(g =>
+    !q || g.some(p => p.supplier.toLowerCase().includes(q) || p.name.toLowerCase().includes(q))
+  ).reverse();
+
+  const container = document.getElementById("purchases-list");
+  if (filtered.length === 0) {
+    container.innerHTML = `<div class="empty">No purchase records found</div>`;
+  } else {
+    container.innerHTML = filtered.map((g, i) => {
+      const groupTotal = g.reduce((sum, p) => sum + p.total, 0);
+      const totalQty   = g.reduce((sum, p) => sum + p.qty, 0);
+      const rows = g.map(p => `
+        <tr>
+          <td>${p.name}</td>
+          <td>${p.qty} units</td>
+          <td><strong>৳${p.total.toFixed(2)}</strong></td>
+        </tr>`).join("");
+      return `
+        <div class="txn-card">
+          <div class="txn-header" onclick="toggleItems('p-items-${i}')">
+            <div>
+              <div class="txn-title">🏭 ${g[0].supplier}</div>
+              <div class="txn-meta">${g[0].date} &nbsp;·&nbsp; ${g.length} medication${g.length > 1 ? "s" : ""} &nbsp;·&nbsp; ${totalQty} units total</div>
+            </div>
+            <div class="txn-total">৳${groupTotal.toFixed(2)}</div>
+          </div>
+          <div class="txn-items" id="p-items-${i}">
+            <table>
+              <thead><tr><th>Medication</th><th>Qty</th><th>Total Cost</th></tr></thead>
+              <tbody>${rows}</tbody>
+            </table>
+          </div>
+        </div>`;
+    }).join("");
+  }
+
+  const totalSpent = purchases.reduce((sum, p) => sum + p.total, 0);
+  const totalUnits = purchases.reduce((sum, p) => sum + p.qty, 0);
+  const orderCount = groupBy(purchases, p => p.supplier + "|" + p.date).length;
+  document.getElementById("p-spent").innerText  = "৳" + totalSpent.toFixed(2);
+  document.getElementById("p-count").innerText  = orderCount;
+  document.getElementById("p-units").innerText  = totalUnits;
+}
+
+renderSales();
+renderPurchases();
+</script>
+</body>
+</html>

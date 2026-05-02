@@ -3,44 +3,83 @@
 <head>
   <title>Pharmacy Inventory</title>
   <style>
-    body { font-family: 'Segoe UI', sans-serif; background-color: #f5f5f5; padding: 20px; }
-    .container { max-width: 800px; margin: auto; background: white; padding: 20px; border-radius: 12px; }
+    body { font-family: 'Segoe UI', sans-serif; background-color: #f0f2f5; margin: 0; padding: 10px; }
+    .header { background: #004d40; color: white; padding: 10px; display: flex; justify-content: space-between; align-items: center; border-radius: 8px; margin-bottom: 10px; }
+    .nav a { margin-left: 15px; color: #b2dfdb; text-decoration: none; font-size: 14px; font-weight: bold; }
+    .container { max-width: 1000px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+    .search-bar { margin-bottom: 14px; }
+    .search-bar input { padding: 10px; font-size: 15px; border: 1px solid #ccc; border-radius: 4px; width: 100%; box-sizing: border-box; }
     table { width: 100%; border-collapse: collapse; }
-    th, td { padding: 12px; border-bottom: 1px solid #eee; text-align: left; }
-    th { background: #004d40; color: white; }
-    .low-stock { color: red; font-weight: bold; }
-    .nav { margin-bottom: 20px; text-align: center; }
-    .nav a { margin: 0 10px; text-decoration: none; color: #00796b; font-weight: bold; }
+    th { background: #004d40; color: white; padding: 10px 12px; text-align: left; }
+    td { padding: 10px 12px; border-bottom: 1px solid #eee; }
+    tr:hover td { background: #f5f5f5; }
+    .low-stock { color: #c62828; font-weight: bold; }
+    .no-stock { color: #aaa; }
+    .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 12px; font-weight: bold; }
+    .badge-low { background: #ffebee; color: #c62828; }
+    .badge-ok { background: #e8f5e9; color: #2e7d32; }
+    .badge-zero { background: #f5f5f5; color: #999; }
   </style>
 </head>
 <body>
-<div class="container">
-  <h2 style="text-align: center;">📦 Current Inventory</h2>
+
+<div class="header">
+  <div style="font-size: 18px; font-weight: bold;">📦 Current Inventory</div>
   <div class="nav">
-    <a href="index.html">Sales</a> | <a href="buy.html">Buy (Supplier)</a> | <a href="report.html">Report</a>
+    <a href="index.html">Sell</a> | <a href="buy.html">Buy (Supplier)</a> | <a href="inventory.html">Inventory</a> | <a href="history.html">History</a>
+  </div>
+</div>
+
+<div class="container">
+  <div class="search-bar">
+    <input id="filterInput" placeholder="🔍 Filter by name, code, or generic..." oninput="filterTable()">
   </div>
   <table>
-    <thead><tr><th>Code</th><th>Medication</th><th>In Stock</th></tr></thead>
+    <thead>
+      <tr><th>Code</th><th>Brand Name</th><th>Generic</th><th>Strength</th><th>In Stock</th></tr>
+    </thead>
     <tbody id="invTable"></tbody>
   </table>
 </div>
 
+<script src="medications.js"></script>
 <script>
-const items = {
-  "M001": "Acmecilin", "M002": "Paracetamol", "M003": "Amoxicillin",
-  "M004": "Cetirizine", "M005": "Ibuprofen", "M006": "Gaviscon"
-};
 const inventory = JSON.parse(localStorage.getItem("inventory")) || {};
 const tbody = document.getElementById("invTable");
 
-for (let code in items) {
-  const qty = inventory[code] || 0;
-  tbody.innerHTML += `<tr>
-    <td>${code}</td>
-    <td>${items[code]}</td>
-    <td class="${qty < 10 ? 'low-stock' : ''}">${qty} units</td>
-  </tr>`;
+function renderTable(list) {
+  tbody.innerHTML = "";
+  list.forEach(m => {
+    const qty = inventory[m.code] || 0;
+    let badgeClass, badgeLabel;
+    if (qty === 0) { badgeClass = "badge-zero"; badgeLabel = "Out of Stock"; }
+    else if (qty < 10) { badgeClass = "badge-low"; badgeLabel = "Low Stock"; }
+    else { badgeClass = "badge-ok"; badgeLabel = "In Stock"; }
+
+    tbody.innerHTML += `<tr>
+      <td>${m.code}</td>
+      <td>${m.brand}</td>
+      <td style="color:#555; font-size:13px;">${m.generic}</td>
+      <td style="color:#777; font-size:13px;">${m.strength}</td>
+      <td>
+        <span class="${qty === 0 ? 'no-stock' : qty < 10 ? 'low-stock' : ''}">${qty} units</span>
+        &nbsp;<span class="badge ${badgeClass}">${badgeLabel}</span>
+      </td>
+    </tr>`;
+  });
 }
+
+function filterTable() {
+  const q = document.getElementById("filterInput").value.toLowerCase().trim();
+  const filtered = medications.filter(m =>
+    m.brand.toLowerCase().includes(q) ||
+    m.generic.toLowerCase().includes(q) ||
+    m.code.toLowerCase().includes(q)
+  );
+  renderTable(filtered);
+}
+
+renderTable(medications);
 </script>
 </body>
 </html>
